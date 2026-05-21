@@ -1,0 +1,48 @@
+# ─── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+
+# ─── Base de datos ────────────────────────────────────────────────────────────
+*.db
+*.sqlite
+*.sqlite3
+
+# ─── Variables de entorno ─────────────────────────────────────────────────────
+.env
+!.env.example
+
+# ─── Archivos de runtime ──────────────────────────────────────────────────────
+backend/uploads/*
+backend/output/*
+backend/models_ml/*.pkl
+backend/logs/*.log
+logs/*.log
+!backend/uploads/.gitkeep
+!backend/output/.gitkeep
+!backend/models_ml/.gitkeep
+!backend/logs/.gitkeep
+
+# ─── Docker ───────────────────────────────────────────────────────────────────
+.docker/
+
+# ─── IDE ──────────────────────────────────────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

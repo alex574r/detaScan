@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\alex5\\\\Downloads\\\\dentascan_2\\\\dentascan\" -Force | Select-Object Name, @{Name=\"Type\"; Expression={if\\($_.PSIsContainer\\){\"DIR\"}else{\"FILE\"}}} | Format-Table -AutoSize)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\alex5\\\\Downloads\\\\dentascan_2\\\\dentascan\" -Recurse -Force)",
+      "Bash(Select-Object FullName)",
+      "Bash(Sort-Object FullName)",
+      "Bash(python -c ' *)",
+      "Bash(python -c \"from app.core.classifier import dental_classifier; print\\('OK - models_loaded:', dental_classifier.is_trained\\(\\)\\)\")",
+      "Bash(.\\\\.venv\\\\Scripts\\\\python.exe -c \"from app.core.classifier import dental_classifier; print\\('OK - models_loaded:', dental_classifier.is_trained\\(\\)\\)\")",
+      "Bash(/c/Users/alex5/anaconda3/envs/dentascan_env/python.exe -c ' *)",
+      "Bash(/c/Users/alex5/anaconda3/envs/dentascan_env/python.exe -m pip install pydantic_settings)",
+      "Bash(/c/Users/alex5/anaconda3/envs/dentascan_env/python.exe -m pytest tests/ -x -q)",
+      "Bash(/c/Users/alex5/anaconda3/envs/dentascan_env/python.exe -m pip install python-docx reportlab matplotlib Pillow)",
+      "Bash(/c/Users/alex5/anaconda3/envs/dentascan_env/python.exe gen_structure.py)",
+      "Bash(/c/Users/alex5/anaconda3/envs/dentascan_env/python.exe gen_diagrams.py)",
+      "PowerShell(& \"C:\\\\Users\\\\alex5\\\\anaconda3\\\\envs\\\\dentascan_env\\\\python.exe\" \"C:\\\\Users\\\\alex5\\\\Downloads\\\\dentascan_2\\\\dentascan\\\\DOCUMENTACION\\\\gen_docs.py\" 2>&1)"
+    ]
+  }
+}

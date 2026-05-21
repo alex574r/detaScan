@@ -1,0 +1,50 @@
+# DentaScan — Dependencias Python
+# Compatible con Python 3.10, 3.11, 3.12 y 3.13
+# Instalar: pip install -r requirements.txt
+
+# ── Framework web ─────────────────────────────────────────────────────────────
+fastapi>=0.115.5
+uvicorn[standard]>=0.32.1
+python-multipart>=0.0.12        # Requerido por FastAPI para Form/File uploads
+
+# ── Base de datos ─────────────────────────────────────────────────────────────
+sqlalchemy>=2.0.36
+alembic>=1.14.0
+
+# ── Autenticación / Seguridad ─────────────────────────────────────────────────
+python-jose[cryptography]>=3.3.0
+bcrypt>=4.2.0
+pydantic-settings>=2.6.1
+pydantic[email]>=2.10.3
+
+# ── Procesamiento de imágenes ─────────────────────────────────────────────────
+# numpy 2.x tiene wheels para Python 3.13; numpy 1.x no
+numpy>=2.0.0
+opencv-python-headless>=4.10.0.84
+matplotlib>=3.9.3
+Pillow>=11.0.0
+
+# ── Imágenes médicas DICOM ────────────────────────────────────────────────────
+pydicom>=2.4.4
+
+# ── Machine Learning ──────────────────────────────────────────────────────────
+scikit-learn>=1.5.2
+joblib>=1.4.2
+scipy>=1.14.1
+
+# ── Deep Learning (opcional — habilita ResNet50 transfer learning + YOLOv8) ──
+# Si no se instalan, el sistema sigue funcionando con RF/SVM/CNN sintéticos.
+# Instalar con:
+#   pip install torch torchvision --index-url https://download.pytorch.org/whl/cpu
+#   pip install --no-deps ultralytics ultralytics-thop polars
+torch>=2.0.0
+torchvision>=0.15.0
+ultralytics>=8.4.0
+
+# ── Pruebas ───────────────────────────────────────────────────────────────────
+pytest>=8.3.4
+pytest-asyncio>=0.24.0
+httpx>=0.28.0
+
+# ── Utilidades ────────────────────────────────────────────────────────────────
+python-dotenv>=1.0.1

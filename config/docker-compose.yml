@@ -1,0 +1,102 @@
+version: "3.9"
+
+# ─── DentaScan — Orquestación Docker ─────────────────────────────────────────
+# Servicios: backend (FastAPI), frontend (Nginx), base de datos (PostgreSQL)
+# Uso: docker compose up --build
+
+services:
+
+  # ── Base de datos PostgreSQL ────────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: dentascan_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dentascan
+      POSTGRES_USER: dentascan_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-DentaScan2024!}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/database/migrations/init.sql:/docker-entrypoint-initdb.d/01_init.sql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dentascan_user -d dentascan"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - dentascan_net
+
+  # ── Backend FastAPI ─────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: dentascan_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://dentascan_user:${DB_PASSWORD:-DentaScan2024!}@db:5432/dentascan
+      SECRET_KEY: ${SECRET_KEY:-cambia_esto_en_produccion_generala_con_openssl}
+      ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 480
+      ENVIRONMENT: ${ENVIRONMENT:-production}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      MAX_FILE_SIZE_MB: 20
+      UPLOAD_DIR: /app/uploads
+      OUTPUT_DIR: /app/output
+      MODELS_DIR: /app/models_ml
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost,http://localhost:80}
+    volumes:
+      - uploads_data:/app/uploads
+      - output_data:/app/output
+      - models_data:/app/models_ml
+      - logs_data:/app/logs
+    ports:
+      - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    networks:
+      - dentascan_net
+
+  # ── Frontend Nginx ──────────────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: dentascan_frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - dentascan_net
+
+# ─── Volúmenes persistentes ───────────────────────────────────────────────────
+volumes:
+  postgres_data:
+    driver: local
+  uploads_data:
+    driver: local
+  output_data:
+    driver: local
+  models_data:
+    driver: local
+  logs_data:
+    driver: local
+
+# ─── Red interna ──────────────────────────────────────────────────────────────
+networks:
+  dentascan_net:
+    driver: bridge

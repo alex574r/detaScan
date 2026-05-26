@@ -117,7 +117,6 @@ async function uploadAndAnalyze() {
   try {
     clearValidationError();
     const analysis = await api.uploadAnalysis(selectedFile, xrayType, model, options);
-    clearFile();
     showResultsSection(analysis.id);
   } catch (err) {
     setLoading(btn, false);

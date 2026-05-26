@@ -1228,6 +1228,24 @@ a.img-download:hover {
   border-radius: 999px;
   color: #fecaca;
 }
+.validation-error-reset {
+  display: block;
+  width: 100%;
+  margin-top: .75rem;
+  padding: .45rem 1rem;
+  background: transparent;
+  border: 1px solid rgba(239, 68, 68, .5);
+  border-radius: 6px;
+  color: #fecaca;
+  font-size: .85rem;
+  cursor: pointer;
+  text-align: center;
+  transition: background .15s, border-color .15s;
+}
+.validation-error-reset:hover {
+  background: rgba(239, 68, 68, .18);
+  border-color: rgba(239, 68, 68, .8);
+}
 
 /* Responsive */
 @media (max-width: 768px) {

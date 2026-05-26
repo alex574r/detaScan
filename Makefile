@@ -2,7 +2,7 @@
 # Uso: make <comando>
 # Requiere: Python 3.12+, bash. Docker para comandos docker-*
 
-.PHONY: help setup run test lint clean docker-up docker-down docker-logs seed train
+.PHONY: help setup run frontend test lint clean docker-up docker-down docker-logs seed train
 
 BACKEND_DIR := backend
 VENV        := $(BACKEND_DIR)/.venv
@@ -16,7 +16,8 @@ help:
 	@echo "DentaScan — Comandos disponibles"
 	@echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 	@echo "  make setup        Instalar dependencias y configurar el proyecto"
-	@echo "  make run          Iniciar backend en modo desarrollo (hot-reload)"
+	@echo "  make run          Iniciar backend en modo desarrollo (hot-reload)
+  make frontend     Iniciar servidor de frontend con caché deshabilitada (puerto 3000)"
 	@echo "  make test         Ejecutar suite de pruebas pytest"
 	@echo "  make lint         Verificar estilo de código (ruff)"
 	@echo "  make seed         Cargar datos de prueba en la base de datos"
@@ -32,6 +33,9 @@ setup:
 	@bash scripts/setup.sh --local
 
 # ─── Desarrollo ───────────────────────────────────────────────────────────────
+frontend:
+	@python3 frontend/server.py
+
 run:
 	@cd $(BACKEND_DIR) && \
 	  source .venv/bin/activate && \

@@ -256,7 +256,15 @@
   <!-- Results Section -->
   <section class="results-section" id="resultsSection" style="display:none">
     <div class="section-header">
-      <h2>Resultados del análisis</h2>
+      <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap">
+        <h2>Resultados del análisis</h2>
+        <button type="button" class="btn btn-outline btn-sm" onclick="resetForNewAnalysis()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="14" height="14">
+            <path d="M3 12a9 9 0 019-9 9 9 0 016.36 2.64L21 9"/><polyline points="15 9 21 9 21 3"/>
+          </svg>
+          Nuevo análisis
+        </button>
+      </div>
       <div class="result-disclaimer">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" width="16" height="16" style="flex-shrink:0">
           <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>

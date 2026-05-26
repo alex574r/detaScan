@@ -72,6 +72,7 @@ function setFile(file) {
   const allowed = [".png", ".jpg", ".jpeg", ".tif", ".tiff", ".dcm"];
   const ext = "." + file.name.split(".").pop().toLowerCase();
   if (!allowed.includes(ext)) {
+    fileInput.value = "";
     alert(`Formato no soportado: ${ext}\nUsa PNG, TIFF, DICOM o JPEG.`);
     return;
   }
@@ -120,6 +121,7 @@ async function uploadAndAnalyze() {
     showResultsSection(analysis.id);
   } catch (err) {
     setLoading(btn, false);
+    clearFile();
     console.error("[upload] error subida:", err, "detail:", err?.detail);
     // Cualquier detail estructurado (objeto con message/reasons) se renderiza
     // como tarjeta de validación.
@@ -220,7 +222,8 @@ function showResultsSection(analysisId) {
 async function pollAnalysis(analysisId, attempts = 0) {
   if (attempts > 60) {
     document.getElementById("statusText").textContent = "El análisis está tardando más de lo esperado. Revisa el historial más tarde.";
-    document.getElementById("btnAnalyze").disabled = false;
+    const btnT = document.getElementById("btnAnalyze");
+    if (btnT) setLoading(btnT, false);
     return;
   }
 
@@ -234,7 +237,8 @@ async function pollAnalysis(analysisId, attempts = 0) {
     } else if (analysis.status === "failed") {
       document.getElementById("statusText").textContent =
         "Error en el análisis: " + (analysis.error_message || "Error desconocido");
-      document.getElementById("btnAnalyze").disabled = false;
+      const btnF = document.getElementById("btnAnalyze");
+      if (btnF) setLoading(btnF, false);
     } else {
       const msgs = ["Aplicando filtros...", "Detectando bordes...",
                     "Extrayendo características...", "Clasificando..."];
@@ -252,4 +256,13 @@ function formatBytes(bytes) {
   if (bytes < 1024) return bytes + " B";
   if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + " KB";
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
+}
+
+// ── Nuevo análisis — resetea todo y vuelve a la zona de carga ────────────────
+
+function resetForNewAnalysis() {
+  clearFile();
+  clearValidationError();
+  document.getElementById("resultsSection").style.display = "none";
+  document.getElementById("upload").scrollIntoView({ behavior: "smooth" });
 }

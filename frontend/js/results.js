@@ -88,7 +88,7 @@ let __currentAnalysis = null;
 function showResults(analysis) {
   __currentAnalysis = analysis;
   const btn = document.getElementById("btnAnalyze");
-  if (btn) btn.disabled = false;
+  if (btn) setLoading(btn, false);
 
   document.getElementById("analysisStatus").style.display = "none";
   const panels = document.getElementById("resultPanels");

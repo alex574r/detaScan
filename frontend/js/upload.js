@@ -193,6 +193,9 @@ function renderValidationError(detail) {
       ${[dental, qual, res, sharp, contr].filter(Boolean)
          .map(s => `<span>${escapeUploadHtml(s)}</span>`).join("")}
     </div>
+    <button type="button" class="validation-error-reset" onclick="clearValidationError(); document.getElementById('dropZone').scrollIntoView({behavior:'smooth'})">
+      Subir otra imagen
+    </button>
   `;
   box.scrollIntoView({ behavior: "smooth", block: "nearest" });
 }

@@ -11,9 +11,9 @@ Estrategia multi-señal (todas baratas en CPU):
      - No corruption (cargable)
 
   2. Análisis de color
-     - Saturación HSV alta → foto a color → penalización (no rechazo inmediato)
-     - Imágenes con ligero tinte azul/verde (film digitalizado) → se tolera
-     - Imagen casi monocromática → rx ✓
+     - Saturación HSV alta -> foto a color -> penalización (no rechazo inmediato)
+     - Imágenes con ligero tinte azul/verde (film digitalizado) -> se tolera
+     - Imagen casi monocromática -> rx OK
 
   3. Métricas de calidad
      - Sharpness, Contraste, Ruido
@@ -28,7 +28,7 @@ Estrategia multi-señal (todas baratas en CPU):
      g) Contraste local vs global
 
   5. Bonificaciones
-     - Relación de aspecto panorámica (ancho:alto ≈ 1.4–3.5)
+     - Relación de aspecto panorámica (ancho:alto = 1.4–3.5)
      - Si la calidad técnica es alta, umbral de dentalidad se relaja
 
   6. Veredict: dental_likelihood >= 0.42 Y quality_score >= 0.21
@@ -49,12 +49,12 @@ from app.utils.logger import get_logger
 logger = get_logger(__name__)
 
 
-# ─── Umbrales ────────────────────────────────────────────────────────────────
+# --- Umbrales ----------------------------------------------------------------
 
 MIN_RESOLUTION        = 150    # px (lado menor) — periapicales web/escaneados pueden ser 150-220px
 MIN_DENTAL_LIKELIHOOD = 0.42   # umbral principal — alta calidad baja hasta 0.28 vía tier adaptativo
 MIN_QUALITY_SCORE     = 0.21   # calidad mínima — sólo rechaza imágenes verdaderamente corruptas
-# Saturación HSV: rx puro → ~0.0; film digitalizado azul → 0.10-0.25; foto real → 0.40+
+# Saturación HSV: rx puro -> ~0.0; film digitalizado azul -> 0.10-0.25; foto real -> 0.40+
 MAX_COLOR_SATURATION  = 0.38   # era 0.18 — tolera film con tinte de color
 
 
@@ -89,7 +89,7 @@ class DentalImageValidator:
         "válida para análisis clínico."
     )
 
-    # ─── API pública ──────────────────────────────────────────────────────────
+    # --- API pública ----------------------------------------------------------
 
     def is_intraoral_photo(self, bgr: np.ndarray) -> tuple[bool, float]:
         """Detecta foto intraoral (mucosa + dientes) por dominancia rosa/rojo."""
@@ -129,16 +129,22 @@ class DentalImageValidator:
         Flujo de decisión:
           1. Sanity + resolución (rechazos inmediatos indiscutibles)
           2. Calidad técnica (sharpness / contraste / ruido)
-          3. Score de dentalidad (7 señales: histograma, bordes, brillo…)
+          3. Score de dentalidad (7 señales: histograma, bordes, brillo...)
           4. Color saturation como PENALIZACIÓN suave al dental_score
              — solo rechazo duro si la imagen es claramente una foto a color
           5. Bonificaciones (aspecto panorámico, intraoral)
           6. Umbral final adaptativo según calidad técnica
         """
+        
+        # DEBUG TIP: Descomenta las siguientes dos líneas para guardar la imagen 
+        # en disco y comprobar qué es exactamente lo que está recibiendo el validador.
+        # import time
+        # cv2.imwrite(f"debug_val_{time.time()}.jpg", image_bgr_or_gray)
+
         reasons: list[str] = []
         metrics: dict = {}
 
-        # ── 0. Sanity de input ───────────────────────────────────────────────
+        # -- 0. Sanity de input -----------------------------------------------
         if image_bgr_or_gray is None or not isinstance(image_bgr_or_gray, np.ndarray):
             return ValidationResult(
                 accepted=False, dental_likelihood=0.0, quality_score=0.0,
@@ -162,13 +168,13 @@ class DentalImageValidator:
         h, w = gray.shape
         metrics["resolution"] = [w, h]
 
-        # ── 1. Resolución mínima ─────────────────────────────────────────────
+        # -- 1. Resolución mínima ---------------------------------------------
         if min(h, w) < min_resolution:
             reasons.append(
-                f"resolución insuficiente ({w}×{h}, mínimo {min_resolution}px)"
+                f"resolución insuficiente ({w}x{h}, mínimo {min_resolution}px)"
             )
 
-        # ── 2. Métricas de calidad ───────────────────────────────────────────
+        # -- 2. Métricas de calidad -------------------------------------------
         sharpness = self._sharpness(gray)
         contrast  = self._contrast(gray)
         noise     = self._noise(gray)
@@ -183,7 +189,7 @@ class DentalImageValidator:
         if noise > 0.95:
             reasons.append("nivel de ruido excesivo")
 
-        # ── 3. Score de "dentalidad" ─────────────────────────────────────────
+        # -- 3. Score de "dentalidad" -----------------------------------------
         dental_score, dental_metrics = self._dental_score(gray)
         metrics.update(dental_metrics)
 
@@ -199,7 +205,7 @@ class DentalImageValidator:
                 f"(text_like={text_like:.2f})"
             )
 
-        # ── 4. Color / saturación — penalización SUAVE, no rechazo inmediato ─
+        # -- 4. Color / saturación — penalización SUAVE, no rechazo inmediato -
         sat_score = self._color_saturation(color)
         metrics["color_saturation"] = round(sat_score, 3)
 
@@ -223,9 +229,9 @@ class DentalImageValidator:
             elif sat_score > MAX_COLOR_SATURATION:
                 # Tinte de color entre 0.38 y 0.60:
                 #   - X-ray de film digitalizado con tinte azul/verde: dental_score >> 0.70
-                #     → penalización moderada, sigue aceptándose
+                #     -> penalización moderada, sigue aceptándose
                 #   - Foto coloreada genérica: dental_score < 0.60
-                #     → penalización fuerte, cae por debajo del umbral
+                #     -> penalización fuerte, cae por debajo del umbral
                 #
                 # Fórmula: penalización crece con el cuadrado de la saturación excedente
                 # (curva convexa: suave al inicio, agresiva cerca de 0.60)
@@ -240,12 +246,12 @@ class DentalImageValidator:
                     sat_score, color_penalty,
                 )
 
-        # ── 5. Bonificaciones ─────────────────────────────────────────────────
+        # -- 5. Bonificaciones -------------------------------------------------
         # Intraoral detectado: alzar dental_score
         if is_intraoral and intraoral_score > 0.50:
             dental_score = max(dental_score, intraoral_score * 0.95)
 
-        # Relación de aspecto panorámica (OPG: ancho ≈ 2-3 × alto)
+        # Relación de aspecto panorámica (OPG: ancho = 2-3 x alto)
         aspect = max(w, h) / max(min(w, h), 1)
         metrics["aspect_ratio"] = round(aspect, 2)
         if 1.35 <= aspect <= 3.8:
@@ -259,27 +265,27 @@ class DentalImageValidator:
         # No aplica si ya capturó el bono panorámico (aspect >= 1.35).
         elif aspect < 1.35:
             peri_dark = dental_metrics.get("xray_dark_sig", 0.0)
-            # Escala: dark=0.60 → +0.054; dark=0.80 → +0.072; dark=1.0 → +0.09 (max)
+            # Escala: dark=0.60 -> +0.054; dark=0.80 -> +0.072; dark=1.0 -> +0.09 (max)
             periapical_bonus = float(np.clip(peri_dark * 0.09, 0.0, 0.09))
             dental_score = min(1.0, dental_score + periapical_bonus)
             if periapical_bonus > 0.01:
                 metrics["periapical_bonus"] = round(periapical_bonus, 3)
 
-        # ── 6. Calidad combinada ─────────────────────────────────────────────
+        # -- 6. Calidad combinada ---------------------------------------------
         quality_score = self._combine_quality(sharpness, contrast, noise, h, w)
         metrics["quality_score"]     = round(quality_score, 3)
         metrics["dental_likelihood"] = round(dental_score, 3)
 
-        # ── 7. Decisión final ─────────────────────────────────────────────────
+        # -- 7. Decisión final -------------------------------------------------
         # Umbral adaptativo de dentalidad: sólo se activa para imágenes de ALTA calidad
         # (quality_score >= 0.55).  Evitamos tiers intermedios porque la zona gris
         # 0.38–0.42 es donde caen algunas fotos de color con is_intraoral marginal;
         # si aplicáramos la reducción a calidad media, esas fotos podrían coarse.
         #
-        # Calidad alta  (≥ 0.55): umbral baja de 0.42 a 0.28
-        #                 → rx de buena calidad con señal dental borderline pasan
+        # Calidad alta  (>= 0.55): umbral baja de 0.42 a 0.28
+        #                 -> rx de buena calidad con señal dental borderline pasan
         # Calidad normal (< 0.55): umbral queda en 0.42
-        #                 → protege frente a fotos de color con dental ≈ 0.41
+        #                 -> protege frente a fotos de color con dental = 0.41
         effective_min_dental = min_dental_likelihood
         if quality_score >= 0.55:
             effective_min_dental = max(0.28, min_dental_likelihood - 0.15)
@@ -319,7 +325,7 @@ class DentalImageValidator:
             )
         return result
 
-    # ─── Sub-detectores ───────────────────────────────────────────────────────
+    # --- Sub-detectores -------------------------------------------------------
 
     @staticmethod
     def _color_saturation(bgr: np.ndarray) -> float:
@@ -361,7 +367,7 @@ class DentalImageValidator:
             0.0, 1.0,
         ))
 
-    # ─── Detector de "dentalidad" ─────────────────────────────────────────────
+    # --- Detector de "dentalidad" ---------------------------------------------
 
     def _dental_score(self, gray: np.ndarray) -> tuple[float, dict]:
         """
@@ -413,7 +419,7 @@ class DentalImageValidator:
         )
         return float(np.clip(score, 0.0, 1.0)), metrics
 
-    # ─── Señales individuales ──────────────────────────────────────────────────
+    # --- Señales individuales --------------------------------------------------
 
     @staticmethod
     def _histogram_bimodality(gray: np.ndarray) -> float:
@@ -421,11 +427,11 @@ class DentalImageValidator:
         Coeficiente de bimodalidad de SAS (BC), corregido.
 
         Notas sobre el BC original:
-          - Distribución normal pura:    BC ≈ 0.33 → score~0
-          - Distribución uniforme:       BC ≈ 0.55 → FALSO POSITIVO si umbral < 0.55
-          - rx panorámica típica:        BC ≈ 0.65-0.90 (fondo oscuro + picos de esmalte)
+          - Distribución normal pura:    BC = 0.33 -> score~0
+          - Distribución uniforme:       BC = 0.55 -> FALSO POSITIVO si umbral < 0.55
+          - rx panorámica típica:        BC = 0.65-0.90 (fondo oscuro + picos de esmalte)
 
-        Umbral de corte aquí = 0.50 → la distribución uniforme queda cerca de 0,
+        Umbral de corte aquí = 0.50 -> la distribución uniforme queda cerca de 0,
         y las rx genuinas (BC > 0.65) obtienen puntaje alto.
         """
         flat = gray.flatten().astype(np.float64)
@@ -441,7 +447,7 @@ class DentalImageValidator:
         bc   = (skew**2 + 1) / (
             kurt + 3 * ((n - 1)**2) / (max((n - 2) * (n - 3), 1)) + 1e-9
         )
-        # Umbral 0.50: uniforme → score≈0.12; rx bimodal → score≈0.5-1.0
+        # Umbral 0.50: uniforme -> score=0.12; rx bimodal -> score=0.5-1.0
         return float(np.clip((bc - 0.50) / 0.45, 0.0, 1.0))
 
     @staticmethod
@@ -449,7 +455,7 @@ class DentalImageValidator:
         """
         Dispersión del histograma (p5 – p95).
         Las radiografías van de muy oscuro (aire) a muy brillante (esmalte): spread alto.
-        Fotos uniformes o demasiado planas → spread bajo.
+        Fotos uniformes o demasiado planas -> spread bajo.
         """
         p5  = float(np.percentile(gray, 5))
         p95 = float(np.percentile(gray, 95))
@@ -463,7 +469,7 @@ class DentalImageValidator:
         Función trapezoidal para densidad de bordes.
 
         Rangos típicos:
-          - Imagen en blanco / sólida:    < 0.01  → score~0
+          - Imagen en blanco / sólida:    < 0.01  -> score~0
           - rx periapical comprimida:     0.03-0.10
           - rx panorámica:                0.06-0.25
           - rx con muchas restauraciones: hasta 0.30
@@ -474,7 +480,7 @@ class DentalImageValidator:
         """
         d = edge_density
         if d < 0.01:
-            # casi sin bordes → no es una imagen de diagnóstico
+            # casi sin bordes -> no es una imagen de diagnóstico
             return d / 0.01 * 0.20
         if d < 0.05:
             # zona de arranque (rx muy blandas o comprimidas)
@@ -485,7 +491,7 @@ class DentalImageValidator:
         if d < 0.45:
             # declive suave — alta densidad de bordes (posible foto natural)
             return 1.0 - (d - 0.30) / 0.15 * 0.55
-        # muy alta densidad → probablemente foto natural
+        # muy alta densidad -> probablemente foto natural
         return max(0.0, 0.45 - (d - 0.45) / 0.30 * 0.45)
 
     @staticmethod
@@ -543,7 +549,7 @@ class DentalImageValidator:
         avg_compact = score / weight_total
 
         # Bono si hay 1-20 blobs compactos (dentadura completa, parcial o periapical)
-        # mu=5 / sigma=10 → periapicales con 1-4 blobs siguen puntuando alto (≥ 0.88)
+        # mu=5 / sigma=10 -> periapicales con 1-4 blobs siguen puntuando alto (>= 0.88)
         #                     panorámicas con 8-14 blobs también superan 0.85
         n_sig   = sum(1 for i in range(1, num) if stats[i, cv2.CC_STAT_AREA] >= 40)
         ds_bonus = DentalImageValidator._gauss_like(n_sig, mu=5, sigma=10)
@@ -581,11 +587,11 @@ class DentalImageValidator:
         Medida de coherencia espacial (suavidad intra-región).
 
         Las radiografías tienen GRANDES regiones de intensidad homogénea
-        (fondo negro = aire, gris medio = hueso/tejido) → la variación local
-        (dentro de una ventana 15×15) es PEQUEÑA comparada con la variación
-        global (entre regiones). Ratio local/global BAJO → buena señal de rx.
+        (fondo negro = aire, gris medio = hueso/tejido) -> la variación local
+        (dentro de una ventana 15x15) es PEQUEÑA comparada con la variación
+        global (entre regiones). Ratio local/global BAJO -> buena señal de rx.
 
-        Imágenes ruidosas / fotos naturales: variación local ≈ global → ratio ≈ 1.
+        Imágenes ruidosas / fotos naturales: variación local = global -> ratio = 1.
 
         Devuelve: 1 - ratio (alto = imagen suave y estructurada como una rx).
         """
@@ -597,8 +603,8 @@ class DentalImageValidator:
         if global_std < 1e-3:
             return 0.0
         ratio = local_std / global_std
-        # ratio ≈ 0.30-0.60 para rx (suaves); ≈ 0.80-1.0 para ruido/fotos
-        # Invertimos: (1 - ratio) normalizado para que rx → score alto
+        # ratio = 0.30-0.60 para rx (suaves); = 0.80-1.0 para ruido/fotos
+        # Invertimos: (1 - ratio) normalizado para que rx -> score alto
         return float(np.clip((0.80 - ratio) / 0.55, 0.0, 1.0))
 
     @staticmethod
